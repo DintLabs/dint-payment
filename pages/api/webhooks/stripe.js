@@ -2,26 +2,16 @@ import Stripe from 'stripe';
 import { ethers } from 'ethers';
 import { buffer } from "micro";
 
-
-const feeData = await maticProvider.getFeeData()
-
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
 const transferDint = async ({ amount, destAddr }) => {
-  const   maxFeePerGas= 250000000000;
-  const maxPriorityFeePerGas= 250000000000;
-  const gasLimit= 21000;
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
-
   // private key of account that holds DINT.
   // Caution: this account must have MATIC/ETH to cover gas fees!
   const signer =  new ethers.Wallet(
-           maxFeePerGas,
-           maxPriorityFeePerGas,
-           gasLimit,
     process.env.DINT_OPERATOR_PRIVATE_KEY,
     provider
   )
@@ -49,7 +39,6 @@ const transferDint = async ({ amount, destAddr }) => {
 
   return tx;
 }
-
 
 export const config = {
   api: {
