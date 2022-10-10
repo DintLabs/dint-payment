@@ -61,9 +61,7 @@ export default async function handler(req, res) {
   try {
     const { data } = await axios({
       method: 'get',
-      url: isProd
-      ? 'https://gasstation-mainnet.matic.network/v2'
-      : 'https://gasstation-mumbai.matic.today/v2',
+      url: 'https://gasstation-mainnet.matic.network/v2',
   })
   maxFeePerGas = ethers.utils.parseUnits(
       Math.ceil(data.fast.maxFee) + '',
