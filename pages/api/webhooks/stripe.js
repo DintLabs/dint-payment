@@ -4,6 +4,9 @@ import { buffer } from "micro";
 import axios from 'axios';
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
+let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+
 
 async function transferDint({
   amount, maxFeePerGas, maxPriorityFeePerGas, destAddr }) {
@@ -53,21 +56,9 @@ export const config = {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 // get max fees from gas station
-let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+
   try {
-    const { data } = await axios({
-      method: 'get',
-      url: 'https://gasstation-mainnet.matic.network/v2',
-  })
-  maxFeePerGas = ethers.utils.parseUnits(
-      Math.ceil(data.fast.maxFee) + '',
-      'gwei'
-  )
-  maxPriorityFeePerGas = ethers.utils.parseUnits(
-      Math.ceil(data.fast.maxPriorityFee) + '',
-      'gwei'
-  )
+    await newFunction();
     const buf = await buffer(req);
     const sig = req.headers["stripe-signature"];
     // make sure that webhook is called by Stripe (not hackers or other ppl)
@@ -89,3 +80,18 @@ let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 }
+async function newFunction() {
+  const { data } = await axios({
+    method: 'get',
+    url: 'https://gasstation-mainnet.matic.network/v2',
+  });
+  maxFeePerGas = ethers.utils.parseUnits(
+    Math.ceil(data.fast.maxFee) + '',
+    'gwei'
+  );
+  maxPriorityFeePerGas = ethers.utils.parseUnits(
+    Math.ceil(data.fast.maxPriorityFee) + '',
+    'gwei'
+  );
+}
+
