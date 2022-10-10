@@ -31,30 +31,12 @@ async function transferDint({ amount, destAddr }) {
         }
       ]; 
 
+
        // get max fees from gas station
-let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-try {
-    const { data } = await axios({
-        method: 'get',
-        url: isProd
-        ? 'https://gasstation-mainnet.matic.network/v2'
-        : 'https://gasstation-mumbai.matic.today/v2',
-    })
-    maxFeePerGas = ethers.utils.parseUnits(
-        Math.ceil(data.fast.maxFee) + '',
-        'gwei'
-    )
-    maxPriorityFeePerGas = ethers.utils.parseUnits(
-        Math.ceil(data.fast.maxPriorityFee) + '',
-        'gwei'
-    )
-} catch {
-    // ignore
-}
-
-
-    const contractAddr = process.env.DINT_CONTRACT_ADDR;
+      const maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+       const maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei  
+    
+       const contractAddr = process.env.DINT_CONTRACT_ADDR;
     const erc20dint = new ethers.Contract(contractAddr, abi, signer);
     const tx = await erc20dint.transfer({
        destAddr,
@@ -77,6 +59,19 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
+    const { data } = await axios({
+      method: 'get',
+      url: isProd
+      ? 'https://gasstation-mainnet.matic.network/v2'
+      : 'https://gasstation-mumbai.matic.today/v2',
+  })
+  maxFeePerGas = ethers.utils.parseUnits(
+      Math.ceil(data.fast.maxFee) + '',
+      'gwei',
+  )
+  maxPriorityFeePerGas = ethers.ethers.utils.parseUnits(
+      Math.ceil(data.fast.maxPriorityFee) + '',
+      'gwei')
     const buf = await buffer(req);
     const sig = req.headers["stripe-signature"];
     // make sure that webhook is called by Stripe (not hackers or other ppl)
