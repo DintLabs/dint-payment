@@ -1,39 +1,25 @@
-import Stripe from 'stripe';
-import { ethers } from 'ethers';
-import { buffer } from "micro";
-import axios from 'axios';
-const stripe = new Stripe(process.env.STRIPE_SECRET);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
-// get max fees from gas station
+const { ethers } = require("ethers");
+
+const INFURA_ID = 'bc694a63cddd4233a0dc6b512f87fd6e'
+const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mainnet.infura.io/v3/${INFURA_ID}`)
+
+const account1 = '0xcF0C304fd08dB5F832b00e0793F6340B3112fC1a' // Your account address 1
+const account2 = '0x2170c47b9026Feaaa01Bc085ce4a3d85E2E43085' // Your account address 2
+
+const privateKey1 = '1e08d524b61b74d5358de85acc94488b7c15df813c033eb01dfeb2780aceacd5' // Private key of account 1
+const wallet = new ethers.Wallet(privateKey1, provider)
+
+
+
+
+const main = async () => {
+    const senderBalanceBefore = await provider.getBalance(account1)
+    const recieverBalanceBefore = await provider.getBalance(account2)
+    const gasPrice = await provider.getGasPrice()
+
+    // get max fees from gas station
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-
-async function transferDint({ amount, destAddr }) {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
-  );
-  // private key of account that holds DINT.
-  // Caution: this account must have MATIC/ETH to cover gas fees!
-  const signer = new ethers.Wallet(
-    process.env.DINT_OPERATOR_PRIVATE_KEY,
-    provider
-  );
-  const abi = [
-    {
-      "constant": false,
-      "inputs": [
-        { "name": "_to", "type": "address" },
-        { "name": "_amount", "type": "uint256" }
-      ],
-      "name": "transfer",
-      "outputs": [{ "name": "success", "type": "bool" }],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ];
-
-
 try {
     const { data } = await axios({
         method: 'get',
@@ -53,44 +39,27 @@ try {
     // ignore
 }
 
-  const contractAddr = process.env.DINT_CONTRACT_ADDR;
-  const erc20dint = new ethers.Contract(contractAddr, abi, signer);
-  const tx = await erc20dint.transfer(
-    destAddr,
-    maxFeePerGas,
+
+    console.log(`\nSender balance before: ${ethers.utils.formatEther(senderBalanceBefore)}`)
+    console.log(`reciever balance before: ${ethers.utils.formatEther(recieverBalanceBefore)}\n`)
+
+    const tx = await wallet.sendTransaction({
+        to: account2,
+        gasPrice: gasPrice.gasPrice, 
+        maxFeePerGas,
     maxPriorityFeePerGas,
-    amount
-  ); // TRANSFER DINT to the customer
+        value: ethers.utils.parseEther("0.025")
 
-  return tx;
+    })
+
+    await tx.wait()
+    console.log(tx)
+
+    const senderBalanceAfter = await provider.getBalance(account1)
+    const recieverBalanceAfter = await provider.getBalance(account2)
+
+    console.log(`\nSender balance after: ${ethers.utils.formatEther(senderBalanceAfter)}`)
+    console.log(`reciever balance after: ${ethers.utils.formatEther(recieverBalanceAfter)}\n`)
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-
-  try {
-    const buf = await buffer(req);
-    const sig = req.headers["stripe-signature"];
-    // make sure that webhook is called by Stripe (not hackers or other ppl)
-    // make sure that Stripe is configured to emit events to your webhook!
-    const event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
-    if(event.type === "payment_intent.succeeded") {
-      const amount = ethers.utils.parseEther(String(event.data.object.amount / 100))
-      const destAddr = event.data.object.metadata.walletAddr;
-      console.log({ amount, destAddr,  maxPriorityFeePerGas,  maxFeePerGas });
-      const tx = await transferDint({ amount, destAddr, maxPriorityFeePerGas,  maxFeePerGas })
-      console.log("tx hash", tx.hash);
-      
-    }
-    res.status(200).json({ received: true });
-  } catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-}
+main()
