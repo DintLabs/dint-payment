@@ -4,7 +4,9 @@ import { buffer } from "micro";
 import axios from 'axios';
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
-
+// get max fees from gas station
+let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 
 async function transferDint({ amount, destAddr }) {
   const provider = new ethers.providers.JsonRpcProvider(
@@ -31,9 +33,7 @@ async function transferDint({ amount, destAddr }) {
     }
   ];
 
-// get max fees from gas station
-let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+
 try {
     const { data } = await axios({
         method: 'get',
@@ -57,6 +57,8 @@ try {
   const erc20dint = new ethers.Contract(contractAddr, abi, signer);
   const tx = await erc20dint.transfer(
     destAddr,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
     amount
   ); // TRANSFER DINT to the customer
 
@@ -82,7 +84,7 @@ export default async function handler(req, res) {
     if(event.type === "payment_intent.succeeded") {
       const amount = ethers.utils.parseEther(String(event.data.object.amount / 100))
       const destAddr = event.data.object.metadata.walletAddr;
-      console.log({ amount, destAddr });
+      console.log({ amount, destAddr,  maxPriorityFeePerGas,  maxFeePerGas });
       const tx = await transferDint({ amount, destAddr, maxPriorityFeePerGas,  maxFeePerGas })
       console.log("tx hash", tx.hash);
       
