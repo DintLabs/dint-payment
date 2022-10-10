@@ -5,16 +5,17 @@ import axios from 'axios';
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
-const transferDint = async ({ amount, destAddr }) => {
+async function transferDint({
+  amount, maxFeePerGas, maxPriorityFeePerGas, destAddr }) {
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
   // private key of account that holds DINT.
   // Caution: this account must have MATIC/ETH to cover gas fees!
-  const signer =  new ethers.Wallet(
+  const signer = new ethers.Wallet(
     process.env.DINT_OPERATOR_PRIVATE_KEY,
     provider
-  )
+  );
   const abi = [
     {
       "constant": false,
@@ -37,7 +38,7 @@ const transferDint = async ({ amount, destAddr }) => {
     maxFeePerGas,
     maxPriorityFeePerGas,
     amount
-  ) // TRANSFER DINT to the customer
+  ); // TRANSFER DINT to the customer
 
   return tx;
 }
