@@ -8,31 +8,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
 
 const transferDint = async ({ amount, destAddr }) => {
-
-// get max fees from gas station
-let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
-try {
-  const { data } = await axios({
-      method: 'get',
-      url: isProd
-      ? 'https://gasstation-mainnet.matic.network/v2'
-      : 'https://gasstation-mumbai.matic.today/v2',
-  })
-  maxFeePerGas = ethers.utils.parseUnits(
-      Math.ceil(data.fast.maxFee) + '',
-      'gwei'
-  )
-  maxPriorityFeePerGas = ethers.utils.parseUnits(
-      Math.ceil(data.fast.maxPriorityFee) + '',
-      'gwei'
-  )
-} catch {
-  // ignore
-}
-
-
-  const provider = new ethers.providers.JsonRpcProvider(
+const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
   // private key of account that holds DINT.
@@ -55,6 +31,28 @@ try {
       "type": "function"
     }
   ];
+
+   // get max fees from gas station
+let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+try {
+    const { data } = await axios({
+        method: 'get',
+        url: isProd
+        ? 'https://gasstation-mainnet.matic.network/v2'
+        : 'https://gasstation-mumbai.matic.today/v2',
+    })
+    maxFeePerGas = ethers.utils.parseUnits(
+        Math.ceil(data.fast.maxFee) + '',
+        'gwei'
+    )
+    maxPriorityFeePerGas = ethers.utils.parseUnits(
+        Math.ceil(data.fast.maxPriorityFee) + '',
+        'gwei'
+    )
+} catch {
+    // ignore
+}
 
   const contractAddr = process.env.DINT_CONTRACT_ADDR;
   const erc20dint = new ethers.Contract(contractAddr, abi, signer);
