@@ -2,21 +2,20 @@ import Stripe from 'stripe';
 import { ethers } from 'ethers';
 import { buffer } from "micro";
 import axios from 'axios';
-
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
 
-const transferDint = async ({ amount, destAddr }) => {
-const provider = new ethers.providers.JsonRpcProvider(
+async function transferDint({ amount, destAddr }) {
+  const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
   // private key of account that holds DINT.
   // Caution: this account must have MATIC/ETH to cover gas fees!
-  const signer =  new ethers.Wallet(
+  const signer = new ethers.Wallet(
     process.env.DINT_OPERATOR_PRIVATE_KEY,
     provider
-  )
+  );
   const abi = [
     {
       "constant": false,
@@ -32,7 +31,7 @@ const provider = new ethers.providers.JsonRpcProvider(
     }
   ];
 
-   // get max fees from gas station
+// get max fees from gas station
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 try {
@@ -58,10 +57,8 @@ try {
   const erc20dint = new ethers.Contract(contractAddr, abi, signer);
   const tx = await erc20dint.transfer(
     destAddr,
-    maxFeePerGas,
-    maxPriorityFeePerGas,
     amount
-  ) // TRANSFER DINT to the customer
+  ); // TRANSFER DINT to the customer
 
   return tx;
 }
@@ -86,9 +83,9 @@ export default async function handler(req, res) {
       const amount = ethers.utils.parseEther(String(event.data.object.amount / 100))
       const destAddr = event.data.object.metadata.walletAddr;
       console.log({ amount, destAddr });
-      const tx = await transferDint({ amount, destAddr })
+      const tx = await transferDint({ amount, destAddr, maxPriorityFeePerGas,  maxFeePerGas })
       console.log("tx hash", tx.hash);
-     
+      
     }
     res.status(200).json({ received: true });
   } catch (err) {
