@@ -38,6 +38,7 @@ async function transferDint({
   const erc20dint = new ethers.Contract(contractAddr, abi, signer);
   const tx = await erc20dint.transfer(
     destAddr,
+    maxFeePerGas,
     amount
   ); // TRANSFER DINT to the customer
 
