@@ -41,11 +41,11 @@ try {
         ? 'https://gasstation-mainnet.matic.network/v2'
         : 'https://gasstation-mumbai.matic.today/v2',
     })
-    maxFeePerGas = ethers.ethers.utils.parseUnits(
+    maxFeePerGas = ethers.utils.parseUnits(
         Math.ceil(data.fast.maxFee) + '',
         'gwei'
     )
-    maxPriorityFeePerGas = ethers.ethers.utils.parseUnits(
+    maxPriorityFeePerGas = ethers.utils.parseUnits(
         Math.ceil(data.fast.maxPriorityFee) + '',
         'gwei'
     )
@@ -57,10 +57,10 @@ try {
     const contractAddr = process.env.DINT_CONTRACT_ADDR;
     const erc20dint = new ethers.Contract(contractAddr, abi, signer);
     const tx = await erc20dint.transfer({
-        to: account2,
+       destAddr,
         maxFeePerGas,
         maxPriorityFeePerGas,
-        value: ethers.ethers.utils.parseEther("0.025")
+       amount,
     }) // TRANSFER DINT to the customer
 
     return tx;
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     // make sure that Stripe is configured to emit events to your webhook!
     const event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     if(event.type === "payment_intent.succeeded") {
-      const amount = ethers.ethers.utils.parseEther(String(event.data.object.amount / 100))
+      const amount = ethers.utils.parseEther(String(event.data.object.amount / 100))
       const destAddr = event.data.object.metadata.walletAddr;
       console.log({ amount, destAddr });
       const tx = await transferDint({ amount, destAddr })
