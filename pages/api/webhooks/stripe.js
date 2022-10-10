@@ -9,7 +9,7 @@ let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 
 
 
 async function transferDint({
-  amount, maxFeePerGas, maxPriorityFeePerGas, destAddr }) {
+  amount, destAddr }) {
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
