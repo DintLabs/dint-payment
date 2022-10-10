@@ -1,11 +1,14 @@
 import Stripe from 'stripe';
 import { ethers } from 'ethers';
 import { buffer } from "micro";
+import axios from 'axios';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
-const gasFee = async () => {
+
+const transferDint = async ({ amount, destAddr }) => {
+
 // get max fees from gas station
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
@@ -27,9 +30,8 @@ try {
 } catch {
   // ignore
 }
-}
 
-const transferDint = async ({ amount, destAddr }) => {
+
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.JSON_RPC_URL // mumbai, polygon, eth mainnet
   );
@@ -88,7 +90,7 @@ export default async function handler(req, res) {
       console.log({ amount, destAddr });
       const tx = await transferDint({ amount, destAddr })
       console.log("tx hash", tx.hash);
-      console.log = gasFee ();
+     
     }
     res.status(200).json({ received: true });
   } catch (err) {
