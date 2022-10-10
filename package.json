@@ -1,5 +1,4 @@
 {
-  "type": "module",
   "name": "dint-member-payments",
   "version": "0.1.0",
   "private": true,
@@ -11,7 +10,6 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^1.38.1",
-    "axios": "^1.1.2",
     "ethers": "^5.7.1",
     "micro": "^9.4.1",
     "next": "12.3.1",
