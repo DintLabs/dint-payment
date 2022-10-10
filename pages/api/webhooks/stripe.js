@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { buffer } from "micro";
 import axios from 'axios';
 
-onst stripe = new Stripe(process.env.STRIPE_SECRET);
+const stripe = new Stripe(process.env.STRIPE_SECRET);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // validate requests
 
 async function transferDint({ amount, destAddr }) {
