@@ -32,10 +32,14 @@ const transferDint = async ({ amount, destAddr }) => {
 
   const contractAddr = process.env.DINT_CONTRACT_ADDR;
   const erc20dint = new ethers.Contract(contractAddr, abi, signer);
+  const gasPrice = await provider.getGasPrice();
   const tx = await erc20dint.transfer(
     destAddr,
-    amount
-  ) // TRANSFER DINT to the customer
+    amount,
+    {
+      gasPrice
+    }
+  ); // TRANSFER DINT to the customer
 
   return tx;
 }
@@ -60,7 +64,7 @@ export default async function handler(req, res) {
       const amount = ethers.utils.parseEther(String(event.data.object.amount / 100))
       const destAddr = event.data.object.metadata.walletAddr;
       console.log({ amount, destAddr });
-      const tx = await transferDint(amount, destAddr, {gasPrice: ethers.utils.parseUnits('100', 'gwei'), gasLimit: 1000000});
+      const tx = await transferDint({ amount, destAddr })
       console.log("tx hash", tx.hash);
     }
     res.status(200).json({ received: true });
